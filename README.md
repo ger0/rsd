@@ -1,9 +1,8 @@
-###TEMAT Wykrywanie znakow drogowych w zdjeciach/filmach 
+### Wykrywanie znakow drogowych w zdjeciach/filmach 
 
-#Problem:   
+# Problem:   
    Detekcja ksztaltow przypominajacych figury geometryczne na obrzezach drogi
-#Metoda:    
+# Metoda:    
    tbd
-#Wyniki:    
+# Wyniki:    
    % wykrytych znakow 
-
