@@ -6,6 +6,21 @@ from matplotlib import pyplot as plt
 
 moments = []
 
+# dziala?
+def LaplacianOfGaussian(image):
+    blur    = cv2.GaussianBlur(image, (3,3), 0)
+    gray    = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
+    laplac  = cv2.Laplacian(gray, cv2.CV_8U,3,3,2)
+    laplac  = cv2.convertScaleAbs(laplac)
+    return laplac 
+    
+def thresholding(image):
+    laplac = LaplacianOfGaussian(image)
+    # 190 - 220 hue dla niebieskich znakow 
+    thres = cv2.bitwise_and(laplac,laplac, mask=hueMask(image, 190, 220))
+    thres = cv2.threshold(thres, 32, 255, cv2.THRESH_BINARY)[1]
+    return thres
+
 def getText(hum):
     strink = str('')
     for i in hum:
@@ -13,83 +28,77 @@ def getText(hum):
     return strink
 
 def getHue(hue):
-    return (int)(hue * (255 / 360))
+    return (int)(hue /2)
 
 # maska na dany kolor
 def hueMask(img, lower, upper):
     image   = cv2.GaussianBlur(img, (3,3), 0) 
     hsv     = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    l_col = np.array([getHue(lower),128,0])
-    u_col = np.array([getHue(upper),255,255])
-
-    l_white = np.array([0,0,128])
-    u_white = np.array([255,255,255])
-
-    mask_col    = cv2.inRange(hsv, l_col, u_col)
-    #return mask_col
-
-    l_white = np.array([0,0,128], dtype=np.uint8)
-    u_white = np.array([255,255,255], dtype=np.uint8)
-
-    l_black = np.array([0,0,0], dtype=np.uint8)
-    u_black = np.array([170,150,50], dtype=np.uint8)
-
-    mask_white = cv2.inRange(hsv, l_white, u_white)
-    mask_black = cv2.inRange(hsv, l_black, u_black)
-
-    mask = cv2.bitwise_or(mask_col, mask_white)
-    # brak czarnej maski byc moze kluczowy
-
-    return mask
+    l_col   = np.array([getHue(lower),50, 50])
+    u_col   = np.array([getHue(upper),255,255])
+    mask    = cv2.inRange(hsv, l_col, u_col)
+    return cv2.bitwise_and(mask, mask)
 
 def contourImage(filename):
     image   = cv2.imread(filename)
-    gray    = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    thres   = thresholding(image)
+    #blur    = cv2.GaussianBlur(gray, (3,3), 0)
 
-    blur    = cv2.GaussianBlur(gray, (3,3), 0)
+    ## statystyka, mozliwe ze nie warto
+    #mn = np.mean(gray)
+    #sd = np.std(gray)
 
-    # statystyka, mozliwe ze nie warto
-    mn = np.mean(gray)
-    sd = np.std(gray)
-
-    #thres = cv2.threshold(blur, 127, 255, cv2.THRESH_BINARY +cv2.THRESH_OTSU)[1]
-    thres = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-    thres = cv2.bitwise_and(thres,thres, mask=hueMask(image, 71, 165))
+    #thres = cv2.threshold(blur, 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+    #thres = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+    #thres = cv2.bitwise_and(thres, thres, mask=hueMask(image, 160, 260))
 
     #thres = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 10, 15)
 
     # nieco szersze krawedzie 
-    dil = cv2.dilate(thres, np.ones((3,3), 'uint8'), iterations=2)
-    ero = cv2.erode(dil, np.ones((3,3), 'uint8'), iterations=1)
 
     #edged = cv2.Canny(ero, mn - 2 * sd, mn)
-    edged = cv2.Canny(ero, 0, 255)
+
+    hor = np.array([[0,1,0], [0, 1, 0], [0, 1, 0]], 'uint8')
+    ver = np.array([[0,0,0], [1, 1, 1], [0, 0, 0]], 'uint8')
+
+    #dil = cv2.dilate(thres, hor, iterations=2)
+    #dil = cv2.dilate(dil, ver, iterations=2)
+    dil = cv2.dilate(thres, np.ones((3,3), 'uint8'), iterations=2)
+    ero = cv2.erode(dil, np.ones((3,3), 'uint8'), iterations=2)
 
     cont, hier = cv2.findContours(ero, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    #areas = []
+    '''
+    maxArea = 0;
+    for c in cont:
+        var = cv2.contourArea(c)
+        if (var > maxArea):
+            maxArea = var
+            '''
     for i in range(0, len(cont)):
-        #approx  = cv2.approxPolyDP(cont[i], 0.01 * cv2.arcLength(cont[i], True), True)
-        #areas.append 
-        '''
-        M       = cv2.moments(cont[i])
-        huM     = cv2.HuMoments(M)
-        for j in range(0,7):
-	        huM[j] = -1 * np.copysign(1.0, huM[j]) * np.log10(abs(huM[j]))
-        if M['m00'] != 0.0:
-            x = int(M['m10']/M['m00'])
-            y = int(M['m01']/M['m00'])
+        #areas.append #
+        bndX, bndY, bndW, bndH = cv2.boundingRect(cont[i])
 
-        moments.append(huM)
-        '''
-        r, g, b = rand(50, 255), rand(50, 255), rand(50, 255)
-        cv2.drawContours(image, cont, i, (r, g, b), 5)
-        #cv2.circle(image,(x, y), 2, (0,0,0), 10)
-        '''
-        image = cv2.putText(image, getText(huM),
-                (x, y), cv2.FONT_HERSHEY_SIMPLEX, 
-                   1, (r, g, b), 3, cv2.LINE_AA)
-                   '''
+        if (bndW * bndH * 0.5 < cv2.contourArea(cont[i])):
+        #if (True):
+            #approx  = cv2.approxPolyDP(cont[i], 0.01 * cv2.arcLength(cont[i], True), True)
+            '''
+            M       = cv2.moments(cont[i])
+            huM     = cv2.HuMoments(M)
+            for j in range(0,7):
+                huM[j] = -1 * np.copysign(1.0, huM[j]) * np.log10(abs(huM[j]))
+            if M['m00'] != 0.0:
+                x = int(M['m10']/M['m00'])
+                y = int(M['m01']/M['m00'])
+
+            moments.append(huM)
+            image = cv2.putText(image, getText(huM),
+                    (x, y), cv2.FONT_HERSHEY_SIMPLEX, 
+                       1, (r, g, b), 3, cv2.LINE_AA)
+            '''
+            r, g, b = rand(50, 255), rand(50, 255), rand(50, 255)
+            cv2.drawContours(image, cont, i, (r, g, b), 5)
+            #cv2.circle(image,(x, y), 2, (0,0,0), 10)
     return image
 
 
