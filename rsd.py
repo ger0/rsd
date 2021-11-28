@@ -1,4 +1,5 @@
 #!/bin/python
+import sys
 import numpy as np
 import cv2
 from random import randint as rand
@@ -43,22 +44,13 @@ def hueMask(img, lower, upper):
 def contourImage(filename):
     image   = cv2.imread(filename)
     thres   = thresholding(image)
-    #blur    = cv2.GaussianBlur(gray, (3,3), 0)
-
-    ## statystyka, mozliwe ze nie warto
-    #mn = np.mean(gray)
-    #sd = np.std(gray)
 
     #thres = cv2.threshold(blur, 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
     #thres = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
     #thres = cv2.bitwise_and(thres, thres, mask=hueMask(image, 160, 260))
-
     #thres = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 10, 15)
 
     # nieco szersze krawedzie 
-
-    #edged = cv2.Canny(ero, mn - 2 * sd, mn)
-
     hor = np.array([[0,1,0], [0, 1, 0], [0, 1, 0]], 'uint8')
     ver = np.array([[0,0,0], [1, 1, 1], [0, 0, 0]], 'uint8')
 
@@ -101,15 +93,23 @@ def contourImage(filename):
             #cv2.circle(image,(x, y), 2, (0,0,0), 10)
     return image
 
+def main():
+    if (len(sys.argv) < 2):
+        print("please input data in correct format!")
+        print("format: rsd.py <input image>")
+    else:
+        print(sys.argv[1:])
+        fileList = sys.argv[1:]
+        fig = plt.figure(figsize=(8,8))
 
-fileList = ['sredni01.png']
-fig = plt.figure(figsize=(8,8))
+        for i in range(0, len(fileList)):
+            image = contourImage(fileList[i])
+            #fig.add_subplot(3, 2, i + 1)
+            fig.add_subplot(1,1,1)
+            plt.axis('off')
+            plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        plt.savefig('output.png')
+        print("Exiting...")
 
-for i in range(0, len(fileList)):
-    image = contourImage(fileList[i])
-    #fig.add_subplot(3, 2, i + 1)
-    fig.add_subplot(1,1,1)
-    plt.axis('off')
-    plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-plt.savefig('output.png')
-print("Exiting...")
+if (__name__ == "__main__"):
+    main()
