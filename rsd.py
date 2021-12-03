@@ -3,18 +3,26 @@ import sys
 import numpy as np
 import cv2
 from random import randint as rand
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 
 # liczba znakow 
 TYPES   = 1
+
+correct_moments = []
 
 # poszukiwane ustawienia
 HUE_MIN     = 190
 HUE_MAX     = 220
 AREA        = 0.5
 MOMENTS     = []
-THRESHOLD   = 32
+THRESHOLD   = 42
 
+def normalizeHist(image):
+    (B, G, R) = cv2.split(image)
+    B = cv2.equalizeHist(B)
+    G = cv2.equalizeHist(G)
+    R = cv2.equalizeHist(R)
+    return cv2.merge((B, G, R))
 # dziala?
 def LaplacianOfGaussian(image):
     blur    = cv2.GaussianBlur(image, (3,3), 0)
@@ -25,42 +33,32 @@ def LaplacianOfGaussian(image):
     
 def thresholding(image, hue_min, hue_max):
     laplac = LaplacianOfGaussian(image)
-    thres = cv2.bitwise_and(laplac,laplac, mask=hueMask(image, hue_min, hue_max))
-    thres = cv2.threshold(thres, THRESHOLD, 255, cv2.THRESH_BINARY)[1]
+    thres = cv2.threshold(laplac, THRESHOLD, 255, cv2.THRESH_BINARY)[1]
+    #thres = cv2.bitwise_and(thres, hueMask(image, hue_min, hue_max))
+    thres = cv2.bitwise_and(hueMask(image, hue_min, hue_max),hueMask(image, hue_min, hue_max))
     return thres
-
-def getText(hum):
-    string = str('')
-    for i in hum:
-        string += str(float(int(i) * 100) / 100) + '\n'
-    return string
 
 # przyjmuje wartosc w stopniach 
 def getHue(hue):
     return (int)(hue /2)
 
 # maska na dany kolor
-def hueMask(img, lower, upper):
+def hueMask(img, lower, upper, neg=False):
     image   = cv2.GaussianBlur(img, (3,3), 0) 
     hsv     = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    l_col   = np.array([getHue(lower),50, 50])
+    l_col   = np.array([getHue(lower),85, 50])
     u_col   = np.array([getHue(upper),255,255])
     mask    = cv2.inRange(hsv, l_col, u_col)
     return cv2.bitwise_and(mask, mask)
 
-def contourImage(filename):
+def contourImage(filename, moments):
     image   = cv2.imread(filename)
+    norm    = normalizeHist(image)
     thres   = [None] * TYPES
     for i in range(0, TYPES):
-        thres[i]   = thresholding(image, HUE_MIN, HUE_MAX)
+        thres[i]   = thresholding(norm, HUE_MIN, HUE_MAX)
 
-    #thres = cv2.threshold(blur, 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-    #thres = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-    #thres = cv2.bitwise_and(thres, thres, mask=hueMask(image, 160, 260))
-    #thres = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 10, 15)
-
-    # nieco szersze krawedzie 
     dil = cv2.dilate(thres[0], np.ones((3,3), 'uint8'), iterations=2)
     ero = cv2.erode(dil, np.ones((3,3), 'uint8'), iterations=2)
 
@@ -76,7 +74,7 @@ def contourImage(filename):
         #areas.append #
         bndX, bndY, bndW, bndH = cv2.boundingRect(cont[i])
 
-        if (bndW * bndH * 0.5 < cv2.contourArea(cont[i])):
+        if (bndW * bndH * AREA < cv2.contourArea(cont[i])):
         #if (True):
             #approx  = cv2.approxPolyDP(cont[i], 0.01 * cv2.arcLength(cont[i], True), True)
             M       = cv2.moments(cont[i])
@@ -87,35 +85,55 @@ def contourImage(filename):
                 x = int(M['m10']/M['m00'])
                 y = int(M['m01']/M['m00'])
 
-            MOMENTS.append(huM)
+            moments.append(huM)
             r, g, b = rand(50, 255), rand(50, 255), rand(50, 255)
-            '''image = cv2.putText(image, getText(huM),
+            image = cv2.putText(image, str(i),
                     (x, y), cv2.FONT_HERSHEY_SIMPLEX, 
                        1, (r, g, b), 3, cv2.LINE_AA)
-                       '''
+                       
             cv2.drawContours(image, cont, i, (r, g, b), 5)
-            #cv2.circle(image,(x, y), 2, (0,0,0), 10)
+            cv2.circle(image,(x, y), 2, (255,255,255), 5)
             #image = thres[0][bndY: bndY + bndH, bndX : bndX + bndW]
             #image = image[bndY: bndY + bndH, bndX : bndX + bndW]
+            print(i)
             print(huM)
-    return image
+    return thres[0]
 
 def main():
     if (len(sys.argv) < 2):
         print("please input data in correct format!")
         print("format: rsd.py <input image>")
     else:
+        # momenty Hu z ktorymi bedziemy porownywac znalezione znaki
+        contourImage('znaki/rondo.jpg', correct_moments) 
+        print('-------------------------------')
+
         print(sys.argv[1:])
         fileList = sys.argv[1:]
+
+        img = cv2.imread(fileList[0])
+        image = contourImage(fileList[0], MOMENTS)
+        if image is None:
+            sys.exit("Could not read the image.")
+
+        cv2.startWindowThread()
+        cv2.namedWindow("floating")
+        cv2.imshow("floating", image)
+        while (cv2.waitKey(0) != ord("q")):
+            print('')
+        cv2.imwrite('output.png', image)
+
+        '''
         fig = plt.figure(figsize=(8,8))
 
         for i in range(0, len(fileList)):
-            image = contourImage(fileList[i])
+            image = contourImage(fileList[i], MOMENTS)
             #fig.add_subplot(3, 2, i + 1)
             fig.add_subplot(1,1,1)
             plt.axis('off')
             plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         plt.savefig('output.png')
+        '''
         print("Exiting...")
 
 if (__name__ == "__main__"):
