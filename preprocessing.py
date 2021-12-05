@@ -24,6 +24,8 @@ def loadNorm(filename):
     calcAverages(norm)
     return img, norm
 
+def crop(image, mask):
+    return cv2.bitwise_or(image, image, mask=mask)
 def calcAverages(image):
     global HSV_SAT, HSV_VAL
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)

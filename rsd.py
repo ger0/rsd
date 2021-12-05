@@ -5,10 +5,9 @@ import cv2
 from matplotlib import pyplot as plt
 import custom_types as ct
 import preprocessing as pre
+import classify as det
 
-print(repr(ct.Colors.RED))
 correct_moments = []
-
 candidates      = []
 
 AREA        = 0.5
@@ -17,12 +16,11 @@ THRESHOLD   = 42
 
 def contourImage(filename, moments):
     image, norm = pre.loadNorm(filename)
-    thres   = {}
-    dil     = {}
-    ero     = {}
+    thres, dil, ero  = {}, {}, {}
 
     # dla kazdego typu koloru
     for color in ct.Colors:
+        # do debugowania
         thres[color] = pre.threshold(norm, color)
         dil[color]  = cv2.dilate(thres[color], np.ones((3,3), 'uint8'), iterations=2)
         ero[color]  = cv2.erode(dil[color], np.ones((3,3), 'uint8'), iterations=2)
@@ -50,7 +48,10 @@ def contourImage(filename, moments):
                 elif (color == ct.Colors.RED):
                     r, g, b = 255, 50, 50
 
-                candidates.append(np.copy(image[bndY: bndY + bndH, bndX : bndX + bndW]))
+                cv2.drawContours(ero[color], cont, iter_cont, 255, -1)
+                cropped = np.copy(norm[bndY: bndY + bndH, bndX : bndX + bndW])
+                mask    = np.copy(ero[color][bndY: bndY + bndH, bndX : bndX + bndW])
+                det.calcHistogram(pre.crop(cropped, mask), color)
 
                 # draw
                 image = cv2.putText(image, str(color),
@@ -58,7 +59,7 @@ def contourImage(filename, moments):
                            1, (b, g, r), 3, cv2.LINE_AA)
                 cv2.drawContours(image, cont, iter_cont, (b, g, r), 5)
                 cv2.circle(image,(x, y), 2, (255,255,255), 5)
-                #print(huM)
+                det.saveVal('val_rondo.txt', huM)
     return image
     
 def main():
