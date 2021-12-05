@@ -51,7 +51,8 @@ def contourImage(filename, typ = None):
                     # wczytywanie histogramow
 
                 else:
-                    print('shape distance:', det.matchShapes(cont[iter_cont], ct.Type.roundabout))
+                    print('shape distance:', det.matchShapes(cont[iter_cont], ct.Type.crosswalk))
+                    print('closest shape:', det.closestShape(cont[iter_cont]))
 
                     cv2.drawContours(ero[color], cont, iter_cont, 255, -1)
                     cropped = np.copy(norm[bndY: bndY + bndH, bndX : bndX + bndW])

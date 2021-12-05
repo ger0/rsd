@@ -49,3 +49,15 @@ def matchShapes(h1, typ):
 '''
 def matchShapes(cont, typ):
     return cv2.matchShapes(cont, contours[typ], cv2.CONTOURS_MATCH_I2, 0)
+
+def closestShape(cont):
+    min_dist = 9999999
+    min_type = None
+    for key, value in contours.items():
+        dist = matchShapes(cont, key)
+        if (dist < min_dist):
+            min_dist = dist
+            min_type = key
+
+    return min_type
+
