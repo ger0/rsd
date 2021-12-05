@@ -6,7 +6,6 @@ from random import randint as rand
 import cv2
 from matplotlib import pyplot as plt
 
-
 # liczba znakow 
 TYPES   = 2
 
@@ -17,33 +16,57 @@ class Types(Enum):
 correct_moments = []
 
 # poszukiwane ustawienia
-BLUE_MIN    = 195
+BLUE_MIN    = 190
 BLUE_MAX    = 250
 
 RED_MIN     = 325
 RED_MAX     = 374
 
-HSV_SAT     = 90
-HSV_VAL     = 90
+HSV_SAT     = 73
+HSV_VAL     = 70
 AREA        = 0.5
 MOMENTS     = []
 THRESHOLD   = 42
 
 def calcAverages(image):
-    (B, G, R) = cv2.split(image)
-    print(np.mean(B))
-    print(np.mean(G))
-    print(np.mean(R))
+    global HSV_SAT, HSV_VAL
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    (H, S, V) = cv2.split(hsv)
+
+    mean_sat = np.mean(S)
+    sd_sat  = np.std(S)
+
+    mean_val = np.mean(V)
+    sd_val  = np.std(V)
+    print(
+          'Hue:',
+          np.mean(H),
+          'Sat:',
+          mean_sat,
+          'Val:',
+          mean_val
+          )
+    print('Hue SD: ', np.std(S), 'Sat SD:', np.std(V))
+
+    if (mean_sat > HSV_SAT):
+        HSV_SAT = int(mean_sat)
+
+    if (mean_val - sd_val > HSV_VAL):
+        print('change')
+        HSV_VAL = int(mean_val - sd_val)
 
 def normalizeHist(image):
     (B, G, R) = cv2.split(image)
-    B = cv2.equalizeHist(B)
-    G = cv2.equalizeHist(G)
-    R = cv2.equalizeHist(R)
-    #ri = np.zeros((800, 800))
-    #normalizedimage = cv2.normalize(image, ri, 0, 255, cv2.NORM_MINMAX)
+    clahe = cv2.createCLAHE(clipLimit=0.4, tileGridSize=(8,8))
+    #B = cv2.equalizeHist(B)
+    #G = cv2.equalizeHist(G)
+    #R = cv2.equalizeHist(R)
+    B = clahe.apply(B)
+    G = clahe.apply(G)
+    R = clahe.apply(R)
     #return normalizedimage
     return cv2.merge((B, G, R))
+'''
 # dziala?
 def LaplacianOfGaussian(image):
     blur    = cv2.GaussianBlur(image, (3,3), 0)
@@ -51,15 +74,7 @@ def LaplacianOfGaussian(image):
     laplac  = cv2.Laplacian(gray, cv2.CV_8U,3,3,2)
     laplac  = cv2.convertScaleAbs(laplac)
     return laplac 
-    
-def thresholding(image, hue_min, hue_max):
-    #laplac = LaplacianOfGaussian(image)
-    #thres = cv2.bitwise_and(laplac, laplac, mask=hueMask(image, hue_min, hue_max))
-    #blur    = cv2.GaussianBlur(image, (3,3), 0)
-    #blur    = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
-    thres = hueMask(image, hue_min, hue_max)
-    thres   = cv2.threshold(thres, THRESHOLD, 255, cv2.THRESH_BINARY)[1]
-    return thres
+    '''
 
 # przyjmuje wartosc w stopniach (0 - 720)
 def getHue(hue):
@@ -69,13 +84,14 @@ def getHue(hue):
         return (int)(hue / 2), False 
 
 # maska na dany kolor
-def hueMask(img, lower, upper, neg=False):
-    image   = cv2.GaussianBlur(img, (3,3), 0) 
+def thresholding(img, lower, upper):
+    image   = cv2.GaussianBlur(img, (9,9), 0) 
     hsv     = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     l, _ = getHue(lower)
     u, isOverlap = getHue(upper)
 
+    # TODO: oczyscic funkcje
     if (isOverlap):
         l_col = np.array([l, HSV_SAT, HSV_VAL])
         u_col = np.array([180, 255, 255])
@@ -96,10 +112,11 @@ def hueMask(img, lower, upper, neg=False):
 def contourImage(filename, moments):
     image   = cv2.imread(filename)
     norm    = normalizeHist(image)
-    calcAverages(image)
+    calcAverages(norm)
     thres   = [None] * TYPES
     dil     = [None] * TYPES
     ero     = [None] * TYPES
+
     # dla kazdego typu koloru
     for i in range(0, TYPES):
         if (i == 0):
@@ -145,8 +162,8 @@ def contourImage(filename, moments):
 
                 #print(i)
                 #print(huM)
-    return image 
-
+    return image
+    
 def main():
     if (len(sys.argv) < 2):
         print("please input data in correct format!")
@@ -158,7 +175,7 @@ def main():
 
         fileList = sys.argv[1:]
 
-        '''
+        ''' # nie dziala na PC????
         cv2.imshow("floating", image)
         while (cv2.waitKey(0) != ord("q")):
             print('')
