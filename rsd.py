@@ -78,12 +78,10 @@ def main():
         fileList = sys.argv[1:]
 
         # wczytywanie konturow dla zdjec referencyjnych
-        contourImage('rondo.jpg', ct.Type.roundabout)
-        contourImage('parking.jpg', ct.Type.parking)
-        contourImage('pieszy.png', ct.Type.crosswalk)
+        contourImage('referencja/rondo.jpg', ct.Type.roundabout)
+        contourImage('referencja/parking.jpg', ct.Type.parking)
+        contourImage('referencja/pieszy.png', ct.Type.crosswalk)
         isSetup = False
-
-        image = contourImage('rondo.jpg')
 
         ''' # nie dziala na PC????
         cv2.imshow("floating", image)
