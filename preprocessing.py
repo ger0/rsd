@@ -18,10 +18,11 @@ HSV_HUE = {
         ct.Colors.RED  : (RED_MIN,  RED_MAX)
         }
 
-def loadNorm(filename):
+def loadNorm(filename, skipNormalization = False):
     img     = cv2.imread(filename)
     norm    = normalizeHist(img)
-    calcAverages(norm)
+    if (not(skipNormalization)):
+        calcAverages(norm)
     return img, norm
 
 def crop(image, mask):
