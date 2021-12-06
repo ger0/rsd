@@ -11,7 +11,7 @@ candidates      = []
 
 AREA        = 0.5
 isSetup     = True
-#push test #2
+#push test #3
 def contourImage(filename, typ = None):
     image, norm = pre.loadNorm(filename, isSetup)
     thres, dil, ero  = {}, {}, {}
