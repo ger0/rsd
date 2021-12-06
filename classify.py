@@ -4,7 +4,9 @@ import numpy as np
 import cv2
 
 hu_moments  = {}
+
 contours    = {}
+histograms  = {}
 
 #def loadValues:
 #def compare
@@ -28,7 +30,46 @@ def loadHuMoment(filename, typ):
 def loadContour(contour, typ):
    contours[typ] = contour 
 
+def loadHistogram(histogram, typ):
+    histograms[typ] = histogram
+
 def calcHistogram(img, color):
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    (h, s, v) = cv2.split(hsv)
+    hist = cv2.calcHist(h, [0], None, [10], (0, 256))
+
+    histRange = (0, 256)
+    histSize = 256
+    hist_w = 512
+    hist_h = 400
+    bin_w = int(round(hist_w/histSize))
+
+    b_hist = cv2.calcHist(img, [0], None, [histSize], histRange, accumulate=False)
+    g_hist = cv2.calcHist(img, [1], None, [histSize], histRange, accumulate=False)
+    r_hist = cv2.calcHist(img, [2], None, [histSize], histRange, accumulate=False)
+
+    cv2.normalize(b_hist, b_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(g_hist, g_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(r_hist, r_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
+
+    histImage = np.zeros((hist_h, hist_w, 3), dtype=np.uint8)
+
+    for i in range(1, histSize):
+        cv2.line(histImage, ( bin_w*(i-1), hist_h - int(b_hist[i-1]) ),
+                (bin_w*(i), hist_h - int(b_hist[i]) ),
+                (255, 0, 0), thickness=2)
+        '''
+        cv2.line(histImage, ( bin_w*(i-1), hist_h - int(g_hist[i-1]) ),
+                (bin_w*(i), hist_h - int(g_hist[i]) ),
+                (0, 255, 0), thickness=2)
+                '''
+        cv2.line(histImage, ( bin_w*(i-1), hist_h - int(r_hist[i-1]) ),
+                (bin_w*(i), hist_h - int(r_hist[i]) ),
+                (0, 0, 255), thickness=2)
+
+    # rysowanie znaku
+    plt.imshow(cv2.cvtColor(histImage, cv2.COLOR_BGR2RGB))
+    plt.show()
     plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     plt.show()
 

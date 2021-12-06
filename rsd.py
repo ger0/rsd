@@ -11,7 +11,7 @@ candidates      = []
 
 AREA        = 0.5
 isSetup     = True
-#push test #6
+
 def contourImage(filename, typ = None):
     image, norm = pre.loadNorm(filename, isSetup)
     thres, dil, ero  = {}, {}, {}
@@ -82,6 +82,7 @@ def main():
         contourImage('referencja/rondo.jpg', ct.Type.roundabout)
         contourImage('referencja/parking.jpg', ct.Type.parking)
         contourImage('referencja/pieszy.png', ct.Type.crosswalk)
+        contourImage('referencja/stop.jpg', ct.Type.stop)
         isSetup = False
 
         ''' # nie dziala na PC????
