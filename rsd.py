@@ -20,27 +20,18 @@ def dataDictionary (filePath):
     file = open(filePath, 'r')
     for line in file:
         tempList.append(line.strip().split())
+
         if (len(tempList[i]) == (1+1+2)):
-            dataDict.update({['path', 'znak', 'coordinates'], [tempList[i][0],
-                                                               [tempList[i][1]],
-                                                               [tempList[i][2], tempList[3]]]})
+            dataDict[str(tempList[i][0])] = [tempList[i][1:]]
+
         elif (len(tempList[i]) == (1+2+4)):
-            dataDict.update(
-                {['path', 'znak', 'coordinates'], [tempList[i][0],
-                                                   [tempList[i][1], tempList[i][1 + 3]],
-                                                   [tempList[i][2], tempList[3], tempList[i][2 + 3], tempList[3 + 3]]]})
+            dataDict[str(tempList[i][0])] = [tempList[i][1:4], tempList[i][4:7]]
+
         elif (len(tempList[i]) == (1+3+6)):
-            dataDict.update(
-                {['path', 'znak', 'coordinates'], [tempList[i][0],
-                                                   [tempList[i][1], tempList[i][1 + 3], tempList[i][1 + (3*2)]],
-                                                   [tempList[i][2], tempList[3], tempList[i][2 + 3], tempList[3 + 3],
-                                                    tempList[i][2 + (3*2)], tempList[3 + (3*2)]]]})
+            dataDict[str(tempList[i][0])] = [tempList[i][1:4], tempList[i][4:7], tempList[i][7:9]]
+
         elif (len(tempList[i]) == (1+4+8)):
-            dataDict.update(
-                {['path', 'znak', 'coordinates'], [tempList[i][0],
-                                                   [tempList[i][1], tempList[i][1 + 3], tempList[i][1 + (3*2)], tempList[i][1 + (3*3)]],
-                                                   [tempList[i][2], tempList[3], tempList[i][2 + 3], tempList[3 + 3],
-                                                    tempList[i][2 + (3*2)], tempList[3 + (3*2)], tempList[i][2 + (3*3)], tempList[3 + (3*3)]]]})
+            dataDict[str(tempList[i][0])] = [tempList[i][1:4], tempList[i][4:7], tempList[i][7:9], tempList[i][9:11]]
 
         i += 1
     return dataDict
