@@ -11,7 +11,40 @@ candidates      = []
 
 AREA        = 0.5
 isSetup     = True
-#push test #6
+
+def dataDictionary (filePath):
+    tempList = []
+    dataDict = {}
+    i = 0
+
+    file = open(filePath, 'r')
+    for line in file:
+        tempList.append(line.strip().split())
+        if (len(tempList[i]) == (1+1+2)):
+            dataDict.update({['path', 'znak', 'coordinates'], [tempList[i][0],
+                                                               [tempList[i][1]],
+                                                               [tempList[i][2], tempList[3]]]})
+        elif (len(tempList[i]) == (1+2+4)):
+            dataDict.update(
+                {['path', 'znak', 'coordinates'], [tempList[i][0],
+                                                   [tempList[i][1], tempList[i][1 + 3]],
+                                                   [tempList[i][2], tempList[3], tempList[i][2 + 3], tempList[3 + 3]]]})
+        elif (len(tempList[i]) == (1+3+6)):
+            dataDict.update(
+                {['path', 'znak', 'coordinates'], [tempList[i][0],
+                                                   [tempList[i][1], tempList[i][1 + 3], tempList[i][1 + (3*2)]],
+                                                   [tempList[i][2], tempList[3], tempList[i][2 + 3], tempList[3 + 3],
+                                                    tempList[i][2 + (3*2)], tempList[3 + (3*2)]]]})
+        elif (len(tempList[i]) == (1+4+8)):
+            dataDict.update(
+                {['path', 'znak', 'coordinates'], [tempList[i][0],
+                                                   [tempList[i][1], tempList[i][1 + 3], tempList[i][1 + (3*2)], tempList[i][1 + (3*3)]],
+                                                   [tempList[i][2], tempList[3], tempList[i][2 + 3], tempList[3 + 3],
+                                                    tempList[i][2 + (3*2)], tempList[3 + (3*2)], tempList[i][2 + (3*3)], tempList[3 + (3*3)]]]})
+
+        i += 1
+    return dataDict
+
 def contourImage(filename, typ = None):
     image, norm = pre.loadNorm(filename, isSetup)
     thres, dil, ero  = {}, {}, {}
@@ -76,7 +109,8 @@ def main():
         #contourImage('znaki/rondo.jpg', correct_moments) 
         print('-------------------------------')
 
-        fileList = sys.argv[1:]
+        #fileList = sys.argv[1:]
+        fileList = dataDictionary(sys.argv[2])
 
         # wczytywanie konturow dla zdjec referencyjnych
         contourImage('referencja/rondo.jpg', ct.Type.roundabout)
