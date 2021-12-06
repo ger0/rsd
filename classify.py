@@ -18,7 +18,8 @@ def saveVal(filename, val):
         file.write(str(a) + ' ')
     file.close()
 
-def loadHuMoment(filename, typ):
+def loadHuMoment(hu, typ):
+    '''
     file    = open(filename, 'r')
     val = file.read()
     file.close()
@@ -26,56 +27,45 @@ def loadHuMoment(filename, typ):
     parsed = np.array(splt[0:-1], dtype=float)
     hu_moments[typ] = parsed
     print(hu_moments[typ])
+    '''
+    hu_moments[typ] = hu
+
 
 def loadContour(contour, typ):
    contours[typ] = contour 
 
-def loadHistogram(histogram, typ):
+def loadHistogram(img, typ):
+    histogram = calcHistogram(img)
     histograms[typ] = histogram
 
-def calcHistogram(img, color):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    (h, s, v) = cv2.split(hsv)
-    hist = cv2.calcHist(h, [0], None, [10], (0, 256))
+def calcHistogram(img):
+    #hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    hist = cv2.calcHist([img], [0, 1, 2], None, [256, 256, 256], [0, 256, 0, 256, 0, 256])
+    #hist = cv2.calcHist([hsv], [1, 2], None, [256, 256], [0, 256, 0, 256])
+    return hist
 
-    histRange = (0, 256)
-    histSize = 256
-    hist_w = 512
-    hist_h = 400
-    bin_w = int(round(hist_w/histSize))
+def matchHistogram(hist, key):
+    return cv2.compareHist(hist, histograms[key], 4)
 
-    b_hist = cv2.calcHist(img, [0], None, [histSize], histRange, accumulate=False)
-    g_hist = cv2.calcHist(img, [1], None, [histSize], histRange, accumulate=False)
-    r_hist = cv2.calcHist(img, [2], None, [histSize], histRange, accumulate=False)
+def closestHistogram(img):
+    min_dist = 9999999
+    min_type = None
+    for key, value in histograms.items():
+        hist = calcHistogram(img)
+        dist = matchHistogram(hist, key)
+        if (dist < min_dist):
+            min_dist = dist
+            min_type = key
 
-    cv2.normalize(b_hist, b_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
-    cv2.normalize(g_hist, g_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
-    cv2.normalize(r_hist, r_hist, alpha=0, beta=hist_h, norm_type=cv2.NORM_MINMAX)
-
-    histImage = np.zeros((hist_h, hist_w, 3), dtype=np.uint8)
-
-    for i in range(1, histSize):
-        cv2.line(histImage, ( bin_w*(i-1), hist_h - int(b_hist[i-1]) ),
-                (bin_w*(i), hist_h - int(b_hist[i]) ),
-                (255, 0, 0), thickness=2)
-        '''
-        cv2.line(histImage, ( bin_w*(i-1), hist_h - int(g_hist[i-1]) ),
-                (bin_w*(i), hist_h - int(g_hist[i]) ),
-                (0, 255, 0), thickness=2)
-                '''
-        cv2.line(histImage, ( bin_w*(i-1), hist_h - int(r_hist[i-1]) ),
-                (bin_w*(i), hist_h - int(r_hist[i]) ),
-                (0, 0, 255), thickness=2)
-
-    # rysowanie znaku
-    plt.imshow(cv2.cvtColor(histImage, cv2.COLOR_BGR2RGB))
-    plt.show()
+    print ('Closest histo:',  min_type, min_dist)
     plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     plt.show()
+    return min_type
 
+
+'''
 # oblicza dystans pomiedzy dwoma wektorami momentow
 # rip nie dziala jak powinno
-'''
 def matchShapes(h1, typ):
     h2 = hu_moments[typ]
     if (len(h1) != 7 or len(h2) != 7):

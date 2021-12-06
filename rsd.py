@@ -12,30 +12,6 @@ candidates      = []
 AREA        = 0.5
 isSetup     = True
 
-def dataDictionary (filePath):
-    tempList = []
-    dataDict = {}
-    i = 0
-
-    file = open(filePath, 'r')
-    for line in file:
-        tempList.append(line.strip().split())
-
-        if (len(tempList[i]) == (1+1+2)):
-            dataDict[str(tempList[i][0])] = [tempList[i][1:]]
-
-        elif (len(tempList[i]) == (1+2+4)):
-            dataDict[str(tempList[i][0])] = [tempList[i][1:4], tempList[i][4:7]]
-
-        elif (len(tempList[i]) == (1+3+6)):
-            dataDict[str(tempList[i][0])] = [tempList[i][1:4], tempList[i][4:7], tempList[i][7:9]]
-
-        elif (len(tempList[i]) == (1+4+8)):
-            dataDict[str(tempList[i][0])] = [tempList[i][1:4], tempList[i][4:7], tempList[i][7:9], tempList[i][9:11]]
-
-        i += 1
-    return dataDict
-
 def contourImage(filename, typ = None):
     image, norm = pre.loadNorm(filename, isSetup)
     thres, dil, ero  = {}, {}, {}
@@ -51,6 +27,7 @@ def contourImage(filename, typ = None):
 
         for iter_cont in range(0, len(cont)):
             # bounding box
+
             bndX, bndY, bndW, bndH = cv2.boundingRect(cont[iter_cont])
 
             if (bndW * bndH * AREA < cv2.contourArea(cont[iter_cont])):
@@ -69,26 +46,34 @@ def contourImage(filename, typ = None):
                 elif (color == ct.Colors.RED):
                     r, g, b = 255, 50, 50
 
+                cv2.drawContours(ero[color], cont, iter_cont, 255, -1)
+                cropped = np.copy(norm[bndY: bndY + bndH, bndX : bndX + bndW])
+                mask    = np.copy(ero[color][bndY: bndY + bndH, bndX : bndX + bndW])
+                # wycinanie tla
+                crop    = pre.crop(cropped, mask)
+
                 # wstepna konfiguracja
                 if (isSetup == True and typ != None):
                     det.loadContour(cont[iter_cont], typ) 
+                    #det.loadHuMoment(huM, typ)
+                    det.loadHistogram(crop, typ) 
                     # wczytywanie histogramow
-
                 else:
-                    print('shape distance:', det.matchShapes(cont[iter_cont], ct.Type.crosswalk))
+                   # print('distance crossw:', det.matchShapes(cont[iter_cont], ct.Type.crosswalk))
+                   # print('distance rondo:', det.matchShapes(cont[iter_cont], ct.Type.roundabout))
+                   # print('distance parking:', det.matchShapes(cont[iter_cont], ct.Type.parking))
+                   # print('distance stop:', det.matchShapes(cont[iter_cont], ct.Type.stop))
                     print('closest shape:', det.closestShape(cont[iter_cont]))
+                    #print('closest histog:', det.closestHistogram(crop))
+                    det.closestHistogram(crop)
 
-                    cv2.drawContours(ero[color], cont, iter_cont, 255, -1)
-                    cropped = np.copy(norm[bndY: bndY + bndH, bndX : bndX + bndW])
-                    mask    = np.copy(ero[color][bndY: bndY + bndH, bndX : bndX + bndW])
-                    det.calcHistogram(pre.crop(cropped, mask), color)
 
-                    # draw
-                    image = cv2.putText(image, str(color),
-                            (x, y), cv2.FONT_HERSHEY_SIMPLEX, 
-                               1, (b, g, r), 3, cv2.LINE_AA)
-                    cv2.drawContours(image, cont, iter_cont, (b, g, r), 5)
-                    cv2.circle(image,(x, y), 2, (255,255,255), 5)
+                # draw
+                image = cv2.putText(image, str(color),
+                        (x, y), cv2.FONT_HERSHEY_SIMPLEX, 
+                           1, (b, g, r), 3, cv2.LINE_AA)
+                cv2.drawContours(image, cont, iter_cont, (b, g, r), 5)
+                cv2.circle(image,(x, y), 2, (255,255,255), 5)
     return image
     
 def main():
@@ -96,18 +81,15 @@ def main():
         print("please input data in correct format!")
         print("format: rsd.py <input image>")
     else:
-        # momenty Hu z ktorymi bedziemy porownywac znalezione znaki
-        #contourImage('znaki/rondo.jpg', correct_moments) 
         print('-------------------------------')
 
-        #fileList = sys.argv[1:]
-        fileList = dataDictionary(sys.argv[2])
+        fileList = sys.argv[1:]
 
         # wczytywanie konturow dla zdjec referencyjnych
+        contourImage('referencja/stop.jpg', ct.Type.stop)
         contourImage('referencja/rondo.jpg', ct.Type.roundabout)
         contourImage('referencja/parking.jpg', ct.Type.parking)
         contourImage('referencja/pieszy.png', ct.Type.crosswalk)
-        contourImage('referencja/stop.jpg', ct.Type.stop)
         isSetup = False
 
         ''' # nie dziala na PC????
