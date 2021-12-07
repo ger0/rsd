@@ -9,7 +9,7 @@ import classify as det
 
 candidates      = []
 
-AREA        = 0.5
+AREA        = 0.6
 isSetup     = True
 
 def contourImage(filename, typ = None):
@@ -27,7 +27,6 @@ def contourImage(filename, typ = None):
 
         for iter_cont in range(0, len(cont)):
             # bounding box
-
             bndX, bndY, bndW, bndH = cv2.boundingRect(cont[iter_cont])
 
             if (bndW * bndH * AREA < cv2.contourArea(cont[iter_cont])):
@@ -45,6 +44,10 @@ def contourImage(filename, typ = None):
                     r, g, b = 50, 50, 255
                 elif (color == ct.Colors.RED):
                     r, g, b = 255, 50, 50
+                '''
+                elif (color == ct.Colors.YELLOW):
+                    r, g, b = 255, 255, 50
+                    '''
 
                 cv2.drawContours(ero[color], cont, iter_cont, 255, -1)
                 cropped = np.copy(norm[bndY: bndY + bndH, bndX : bndX + bndW])
@@ -56,25 +59,30 @@ def contourImage(filename, typ = None):
                 if (isSetup == True and typ != None):
                     det.loadContour(cont[iter_cont], typ) 
                     #det.loadHuMoment(huM, typ)
-                    det.loadHistogram(crop, typ) 
+                    #det.loadHistogram(crop, typ) 
                     # wczytywanie histogramow
                 else:
                    # print('distance crossw:', det.matchShapes(cont[iter_cont], ct.Type.crosswalk))
                    # print('distance rondo:', det.matchShapes(cont[iter_cont], ct.Type.roundabout))
                    # print('distance parking:', det.matchShapes(cont[iter_cont], ct.Type.parking))
                    # print('distance stop:', det.matchShapes(cont[iter_cont], ct.Type.stop))
-                    print('closest shape:', det.closestShape(cont[iter_cont]))
+                    #print('closest shape:', det.closestShape(cont[iter_cont]))
                     #print('closest histog:', det.closestHistogram(crop))
-                    det.closestHistogram(crop)
-
-
+                    #det.closestHistogram(crop)
                 # draw
-                image = cv2.putText(image, str(color),
-                        (x, y), cv2.FONT_HERSHEY_SIMPLEX, 
-                           1, (b, g, r), 3, cv2.LINE_AA)
-                cv2.drawContours(image, cont, iter_cont, (b, g, r), 5)
-                cv2.circle(image,(x, y), 2, (255,255,255), 5)
-    return image
+                    shapeMatch, shapeDist = det.closestShape(cont[iter_cont], color)
+                    if (shapeDist < 0.01):
+                        print(shapeMatch, shapeDist)
+                        #debug
+                        plt.imshow(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
+                        plt.show()
+                        #
+                        image = cv2.putText(image, str(color),
+                                (x, y), cv2.FONT_HERSHEY_SIMPLEX, 
+                                   1, (b, g, r), 3, cv2.LINE_AA)
+                        cv2.drawContours(image, cont, iter_cont, (b, g, r), 5)
+                        cv2.circle(image,(x, y), 2, (255,255,255), 5)
+    return ero[ct.Colors.BLUE]
     
 def main():
     if (len(sys.argv) < 2):
@@ -86,10 +94,8 @@ def main():
         fileList = sys.argv[1:]
 
         # wczytywanie konturow dla zdjec referencyjnych
-        contourImage('referencja/stop.jpg', ct.Type.stop)
-        contourImage('referencja/rondo.jpg', ct.Type.roundabout)
-        contourImage('referencja/parking.jpg', ct.Type.parking)
-        contourImage('referencja/pieszy.png', ct.Type.crosswalk)
+        contourImage('referencja/rondo.jpg', ct.Type.circular)
+        contourImage('referencja/parking.jpg', ct.Type.square)
         isSetup = False
 
         ''' # nie dziala na PC????

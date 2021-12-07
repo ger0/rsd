@@ -9,13 +9,17 @@ BLUE_MAX    = 250
 RED_MIN     = 315
 RED_MAX     = 374
 
+YELLOW_MIN  = 30
+YELLOW_MAX  = 45
+
 HSV_SAT     = 73
 HSV_VAL     = 70
 
 # TODO: refactor
 HSV_HUE = {
-        ct.Colors.BLUE : (BLUE_MIN, BLUE_MAX),
-        ct.Colors.RED  : (RED_MIN,  RED_MAX)
+        ct.Colors.BLUE      : (BLUE_MIN,    BLUE_MAX),
+        ct.Colors.RED       : (RED_MIN,     RED_MAX)
+        #ct.Colors.YELLOW    : (YELLOW_MIN,  YELLOW_MAX)
         }
 
 def loadNorm(filename, skipNormalization = False):

@@ -30,7 +30,6 @@ def loadHuMoment(hu, typ):
     '''
     hu_moments[typ] = hu
 
-
 def loadContour(contour, typ):
    contours[typ] = contour 
 
@@ -58,10 +57,9 @@ def closestHistogram(img):
             min_type = key
 
     print ('Closest histo:',  min_type, min_dist)
-    plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    plt.show()
+    #plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    #plt.show()
     return min_type
-
 
 '''
 # oblicza dystans pomiedzy dwoma wektorami momentow
@@ -81,14 +79,15 @@ def matchShapes(h1, typ):
 def matchShapes(cont, typ):
     return cv2.matchShapes(cont, contours[typ], cv2.CONTOURS_MATCH_I2, 0)
 
-def closestShape(cont):
+def closestShape(cont, color):
     min_dist = 9999999
     min_type = None
     for key, value in contours.items():
         dist = matchShapes(cont, key)
         if (dist < min_dist):
-            min_dist = dist
-            min_type = key
+            # debug
+            if (not(color == ct.Colors.RED and key == ct.Type.square)):
+                min_dist = dist
+                min_type = key
 
-    return min_type
-
+    return min_type, min_dist
