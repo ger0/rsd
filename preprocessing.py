@@ -9,8 +9,8 @@ BLUE_MAX    = 250
 RED_MIN     = 315
 RED_MAX     = 374
 
-YELLOW_MIN  = 30
-YELLOW_MAX  = 45
+#YELLOW_MIN  = 30
+#YELLOW_MAX  = 45
 
 HSV_SAT     = 73
 HSV_VAL     = 70
@@ -60,23 +60,18 @@ def calcAverages(image):
 def normalizeHist(image):
     (B, G, R) = cv2.split(image)
     clahe = cv2.createCLAHE(clipLimit=0.4, tileGridSize=(8,8))
-    #B = cv2.equalizeHist(B)
-    #G = cv2.equalizeHist(G)
-    #R = cv2.equalizeHist(R)
     B = clahe.apply(B)
     G = clahe.apply(G)
     R = clahe.apply(R)
-    #return normalizedimage
     return cv2.merge((B, G, R))
-'''
-# dziala?
+
+# niewykorzystywane
 def LaplacianOfGaussian(image):
     blur    = cv2.GaussianBlur(image, (3,3), 0)
     gray    = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
     laplac  = cv2.Laplacian(gray, cv2.CV_8U,3,3,2)
     laplac  = cv2.convertScaleAbs(laplac)
     return laplac 
-    '''
 
 # przyjmuje wartosc w stopniach (0 - 720)
 def getHue(hue):

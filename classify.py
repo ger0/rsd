@@ -19,7 +19,6 @@ def saveVal(filename, val):
     file.close()
 
 def loadHuMoment(hu, typ):
-    '''
     file    = open(filename, 'r')
     val = file.read()
     file.close()
@@ -27,7 +26,6 @@ def loadHuMoment(hu, typ):
     parsed = np.array(splt[0:-1], dtype=float)
     hu_moments[typ] = parsed
     print(hu_moments[typ])
-    '''
     hu_moments[typ] = hu
 
 def loadContour(contour, typ):
@@ -63,7 +61,7 @@ def closestHistogram(img):
 
 '''
 # oblicza dystans pomiedzy dwoma wektorami momentow
-# rip nie dziala jak powinno
+# nie dziala jak powinno
 def matchShapes(h1, typ):
     h2 = hu_moments[typ]
     if (len(h1) != 7 or len(h2) != 7):
@@ -76,6 +74,8 @@ def matchShapes(h1, typ):
             dist += np.abs(h1[i] - h2[i])
         return dist
 '''
+
+# oblicza podobienstwo dwoch konturow
 def matchShapes(cont, typ):
     return cv2.matchShapes(cont, contours[typ], cv2.CONTOURS_MATCH_I2, 0)
 
@@ -85,7 +85,6 @@ def closestShape(cont, color):
     for key, value in contours.items():
         dist = matchShapes(cont, key)
         if (dist < min_dist):
-            # debug
             if (not(color == ct.Colors.RED and key == ct.Type.square)):
                 min_dist = dist
                 min_type = key

@@ -2,7 +2,7 @@ from enum import Enum
 class Colors(Enum):
     BLUE    = 0
     RED     = 1
-#    YELLOW  = 2
+    #YELLOW  = 2
 
 '''
 class Type(Enum):

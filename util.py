@@ -1,3 +1,4 @@
+# do uproszczenia
 def dataDictionary (filePath):
     tempList = []
     dataDict = {}

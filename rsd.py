@@ -13,8 +13,6 @@ AREA_THRESH  = 0.5
 DIST_THRESH  = 0.01
 isSetup     = True
 
-testMat     = [[]]
-
 def contourImage(filename, typ = None):
     image, norm = pre.loadNorm(filename, isSetup)
     thres, dil, ero  = {}, {}, {}
@@ -61,22 +59,13 @@ def contourImage(filename, typ = None):
                 # wstepna konfiguracja
                 if (isSetup == True and typ != None):
                     det.loadContour(cont[iter_cont], typ) 
-                    #det.loadHuMoment(huM, typ)
-                    #det.loadHistogram(crop, typ) 
                     # wczytywanie histogramow
                 else:
-                   # print('distance crossw:', det.matchShapes(cont[iter_cont], ct.Type.crosswalk))
-                   # print('distance rondo:', det.matchShapes(cont[iter_cont], ct.Type.roundabout))
-                   # print('distance parking:', det.matchShapes(cont[iter_cont], ct.Type.parking))
-                   # print('distance stop:', det.matchShapes(cont[iter_cont], ct.Type.stop))
-                    #print('closest shape:', det.closestShape(cont[iter_cont]))
-                    #print('closest histog:', det.closestHistogram(crop))
-                    #det.closestHistogram(crop)
                 # draw
                     shapeMatch, shapeDist = det.closestShape(cont[iter_cont], color)
                     if (shapeDist < DIST_THRESH):
-                        print('Detected shape:', shapeMatch, 'Similarity:', shapeDist)
-                        print('Detected at (x, y):', x, y)
+                        print('matched shape:', shapeMatch, 'distance:', shapeDist)
+                        print('at (x, y):', x, y)
                         #debug
                         plt.imshow(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
                         plt.show()
@@ -91,43 +80,33 @@ def contourImage(filename, typ = None):
 def main():
     if (len(sys.argv) != 2):
         print("please input data in correct format!")
-        print("format: rsd.py <input image>")
+        print("format: rsd.py <input image_list.txt>")
     else:
-        print('-------------------------------')
-
         fileList = util.dataDictionary(sys.argv[1])
 
         # wczytywanie konturow dla zdjec referencyjnych
         contourImage('referencja/rondo.jpg', ct.Type.circular)
         contourImage('referencja/parking.jpg', ct.Type.square)
+
         isSetup = False
 
-        ''' # nie dziala na PC?
-        cv2.imshow("floating", image)
-        while (cv2.waitKey(0) != ord("q")):
-            print('')
-        cv2.imwrite('output.png', image)
-
-        '''
         fig = plt.figure(figsize=(8,8))
 
         for i in fileList.keys():
             path    = './znaki/' + i
-            expectType    = i[0][0]
-            expectPos     = i[0][1:3]
+            expectType    = i[0][0:3]
 
             print(path)
-            print(expectType, expectPos)
+            print(expectType)
             image = contourImage(path)
             if image is None:
                 sys.exit("Could not read the image.")
-            #fig.add_subplot(3, 2, i + 1)
             fig.add_subplot(1,1,1)
             plt.axis('off')
             plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
             plt.show()
+            print('-------------------------------')
 
-        plt.savefig('output.png')
         print("Exiting...")
 
 if (__name__ == "__main__"):
