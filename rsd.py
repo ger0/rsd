@@ -7,10 +7,13 @@ import custom_types as ct
 import preprocessing as pre
 import classify as det
 
-candidates      = []
+import util
 
-AREA        = 0.6
+AREA_THRESH  = 0.5
+DIST_THRESH  = 0.01
 isSetup     = True
+
+testMat     = [[]]
 
 def contourImage(filename, typ = None):
     image, norm = pre.loadNorm(filename, isSetup)
@@ -29,7 +32,7 @@ def contourImage(filename, typ = None):
             # bounding box
             bndX, bndY, bndW, bndH = cv2.boundingRect(cont[iter_cont])
 
-            if (bndW * bndH * AREA < cv2.contourArea(cont[iter_cont])):
+            if (bndW * bndH * AREA_THRESH < cv2.contourArea(cont[iter_cont])):
             #if (True):
                 M       = cv2.moments(cont[iter_cont])
                 huM     = cv2.HuMoments(M)
@@ -71,8 +74,9 @@ def contourImage(filename, typ = None):
                     #det.closestHistogram(crop)
                 # draw
                     shapeMatch, shapeDist = det.closestShape(cont[iter_cont], color)
-                    if (shapeDist < 0.01):
-                        print(shapeMatch, shapeDist)
+                    if (shapeDist < DIST_THRESH):
+                        print('Detected shape:', shapeMatch, 'Similarity:', shapeDist)
+                        print('Detected at (x, y):', x, y)
                         #debug
                         plt.imshow(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
                         plt.show()
@@ -82,23 +86,23 @@ def contourImage(filename, typ = None):
                                    1, (b, g, r), 3, cv2.LINE_AA)
                         cv2.drawContours(image, cont, iter_cont, (b, g, r), 5)
                         cv2.circle(image,(x, y), 2, (255,255,255), 5)
-    return ero[ct.Colors.BLUE]
+    return image 
     
 def main():
-    if (len(sys.argv) < 2):
+    if (len(sys.argv) != 2):
         print("please input data in correct format!")
         print("format: rsd.py <input image>")
     else:
         print('-------------------------------')
 
-        fileList = sys.argv[1:]
+        fileList = util.dataDictionary(sys.argv[1])
 
         # wczytywanie konturow dla zdjec referencyjnych
         contourImage('referencja/rondo.jpg', ct.Type.circular)
         contourImage('referencja/parking.jpg', ct.Type.square)
         isSetup = False
 
-        ''' # nie dziala na PC????
+        ''' # nie dziala na PC?
         cv2.imshow("floating", image)
         while (cv2.waitKey(0) != ord("q")):
             print('')
@@ -107,15 +111,22 @@ def main():
         '''
         fig = plt.figure(figsize=(8,8))
 
-        for i in range(0, len(fileList)):
-            print(fileList[i])
-            image = contourImage(fileList[i])
+        for i in fileList.keys():
+            path    = './znaki/' + i
+            expectType    = i[0][0]
+            expectPos     = i[0][1:3]
+
+            print(path)
+            print(expectType, expectPos)
+            image = contourImage(path)
             if image is None:
                 sys.exit("Could not read the image.")
             #fig.add_subplot(3, 2, i + 1)
             fig.add_subplot(1,1,1)
             plt.axis('off')
             plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            plt.show()
+
         plt.savefig('output.png')
         print("Exiting...")
 
